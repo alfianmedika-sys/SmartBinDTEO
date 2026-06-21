@@ -1,0 +1,10 @@
+{
+  "Botol plastik": {
+    "lebar_px": 410,
+    "jarak_cm": 50.0
+  },
+  "Kulit buah": {
+    "lebar_px": 325,
+    "jarak_cm": 50.0
+  }
+}

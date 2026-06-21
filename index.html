@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBin Monitor</title>
+<style>
+  /* ── TOKEN SYSTEM ─────────────────────────────────────────────── */
+  :root {
+    --bg:           #0d1117;
+    --surface:      #161b22;
+    --surface-2:    #1c2333;
+    --border:       #30363d;
+    --text:         #e6edf3;
+    --text-muted:   #7d8590;
+    --green:        #2ea043;
+    --green-light:  #3fb950;
+    --green-glow:   rgba(46,160,67,0.18);
+    --yellow:       #d29922;
+    --yellow-light: #e3b341;
+    --yellow-glow:  rgba(210,153,34,0.18);
+    --red:          #da3633;
+    --red-light:    #f85149;
+    --red-glow:     rgba(218,54,51,0.18);
+    --blue:         #1f6feb;
+    --blue-light:   #58a6ff;
+    --blue-glow:    rgba(31,111,235,0.15);
+    --styro:        #8b5cf6;
+    --styro-light:  #a78bfa;
+    --radius:       10px;
+    --radius-sm:    6px;
+    font-size: 15px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ───────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  #status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    display: inline-block;
+    transition: background 0.3s;
+  }
+  #status-dot.online  { background: var(--green-light); box-shadow: 0 0 8px var(--green); }
+  #status-dot.offline { background: var(--red-light);   box-shadow: 0 0 8px var(--red); }
+
+  #status-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  #last-update {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* ── LAYOUT ───────────────────────────────────────────────────── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px 48px;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+
+  .section-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  /* ── BIN CARDS (row 1: 2 kolom) ──────────────────────────────── */
+  .bins-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .bin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bin-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .bin-card.organik::before   { background: var(--green); }
+  .bin-card.anorganik::before { background: var(--blue-light); }
+
+  .bin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+
+  .bin-name {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .bin-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .organik   .bin-badge { background: var(--green-glow);  color: var(--green-light); }
+  .anorganik .bin-badge { background: var(--blue-glow);   color: var(--blue-light); }
+
+  /* Level bar — signature element */
+  .level-wrap {
+    margin-bottom: 18px;
+  }
+
+  .level-track {
+    height: 10px;
+    background: var(--surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .level-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1),
+                background 0.4s;
+    width: 0%;
+  }
+  .organik   .level-fill { background: var(--green); }
+  .anorganik .level-fill { background: var(--blue-light); }
+  .level-fill.warn  { background: var(--yellow); }
+  .level-fill.crit  { background: var(--red); }
+
+  .level-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .level-pct {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .level-dist {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .bin-metrics {
+    display: flex;
+    gap: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .metric-val {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .metric-lbl {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .metric-ts {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ── DETECTION LOG (row 2 kiri) ───────────────────────────────── */
+  .detect-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  #detect-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  #detect-list::-webkit-scrollbar { width: 4px; }
+  #detect-list::-webkit-scrollbar-track { background: transparent; }
+  #detect-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .detect-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    transition: background 0.15s;
+  }
+  .detect-row:hover { background: var(--surface-2); }
+
+  .detect-time { color: var(--text-muted); font-size: 0.7rem; }
+
+  .detect-class {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .detect-class.organik             { color: var(--green-light); }
+  .detect-class.anorganik           { color: var(--blue-light); }
+  .detect-class.anorganik_styrofoam { color: var(--styro-light); }
+
+  .detect-conf {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .detect-route {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .detect-route.organik   { background: var(--green-glow);  color: var(--green-light); }
+  .detect-route.anorganik { background: var(--blue-glow);   color: var(--blue-light); }
+
+  .empty-state {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 24px 0;
+    text-align: center;
+  }
+
+  /* ── SUMMARY CARD (row 2 kanan) ───────────────────────────────── */
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .summary-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .summary-lbl {
+    font-size: 0.75rem;
+    min-width: 130px;
+    font-weight: 600;
+  }
+  .summary-lbl.organik             { color: var(--green-light); }
+  .summary-lbl.anorganik           { color: var(--blue-light); }
+  .summary-lbl.anorganik_styrofoam { color: var(--styro-light); }
+
+  .summary-track {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .summary-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .summary-fill.organik             { background: var(--green); }
+  .summary-fill.anorganik           { background: var(--blue-light); }
+  .summary-fill.anorganik_styrofoam { background: var(--styro); }
+
+  .summary-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .summary-total {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── RESPONSIVE ───────────────────────────────────────────────── */
+  @media (max-width: 680px) {
+    main { grid-template-columns: 1fr; }
+    .bins-row { grid-template-columns: 1fr; }
+    header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">♻</div>
+    SmartBin Monitor
+  </div>
+  <div class="header-right">
+    <span id="status-dot"></span>
+    <span id="status-label">menghubungkan...</span>
+    <span id="last-update"></span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── TONG SAMPAH ──────────────────────────────────── -->
+  <div class="bins-row">
+    <!-- Organik -->
+    <div class="bin-card organik">
+      <div class="bin-header">
+        <span class="bin-name">Tong Organik</span>
+        <span class="bin-badge">ORGANIK</span>
+      </div>
+      <div class="level-wrap">
+        <div class="level-track">
+          <div class="level-fill" id="fill-organik"></div>
+        </div>
+        <div class="level-row">
+          <span class="level-pct" id="pct-organik">—</span>
+          <span class="level-dist" id="dist-organik">— cm</span>
+        </div>
+      </div>
+      <div class="bin-metrics">
+        <div class="metric">
+          <span class="metric-val" id="weight-organik">— kg</span>
+          <span class="metric-lbl">Berat</span>
+        </div>
+        <div class="metric">
+          <span class="metric-val metric-ts" id="ts-organik">—</span>
+          <span class="metric-lbl">Update terakhir</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anorganik -->
+    <div class="bin-card anorganik">
+      <div class="bin-header">
+        <span class="bin-name">Tong Anorganik</span>
+        <span class="bin-badge">ANORGANIK</span>
+      </div>
+      <div class="level-wrap">
+        <div class="level-track">
+          <div class="level-fill" id="fill-anorganik"></div>
+        </div>
+        <div class="level-row">
+          <span class="level-pct" id="pct-anorganik">—</span>
+          <span class="level-dist" id="dist-anorganik">— cm</span>
+        </div>
+      </div>
+      <div class="bin-metrics">
+        <div class="metric">
+          <span class="metric-val" id="weight-anorganik">— kg</span>
+          <span class="metric-lbl">Berat</span>
+        </div>
+        <div class="metric">
+          <span class="metric-val metric-ts" id="ts-anorganik">—</span>
+          <span class="metric-lbl">Update terakhir</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOG DETEKSI ──────────────────────────────────── -->
+  <div class="detect-card">
+    <p class="section-label">Log Deteksi YOLO</p>
+    <div id="detect-list">
+      <div class="empty-state">Belum ada data deteksi</div>
+    </div>
+  </div>
+
+  <!-- ── RINGKASAN ────────────────────────────────────── -->
+  <div class="summary-card">
+    <p class="section-label">Total Deteksi per Kelas</p>
+    <div class="summary-item">
+      <div class="summary-bar-row">
+        <span class="summary-lbl organik">Organik</span>
+        <div class="summary-track"><div class="summary-fill organik" id="bar-organik"></div></div>
+        <span class="summary-count" id="cnt-organik">0</span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-bar-row">
+        <span class="summary-lbl anorganik">Anorganik</span>
+        <div class="summary-track"><div class="summary-fill anorganik" id="bar-anorganik"></div></div>
+        <span class="summary-count" id="cnt-anorganik">0</span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-bar-row">
+        <span class="summary-lbl anorganik_styrofoam">Anorganik (Styrofoam)</span>
+        <div class="summary-track"><div class="summary-fill anorganik_styrofoam" id="bar-styro"></div></div>
+        <span class="summary-count" id="cnt-styro">0</span>
+      </div>
+    </div>
+    <div class="summary-total" id="total-label">Total: 0 deteksi</div>
+  </div>
+
+</main>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────
+const API_BASE    = "";          // kosong = same-origin (Flask serve index.html)
+const POLL_MS     = 5000;        // polling setiap 5 detik
+const WARN_PCT    = 70;
+const CRIT_PCT    = 90;
+
+// ── UTIL ───────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function fmtTs(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts.replace(" ", "T"));
+  return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function setStatus(online) {
+  const dot   = $("status-dot");
+  const label = $("status-label");
+  dot.className   = online ? "online" : "offline";
+  label.textContent = online ? "terhubung" : "tidak terhubung";
+}
+
+// ── UPDATE BIN CARD ────────────────────────────────────────────────
+function updateBin(binId, sensor, weight) {
+  const fill   = $(`fill-${binId}`);
+  const pct    = $(`pct-${binId}`);
+  const dist   = $(`dist-${binId}`);
+  const wEl    = $(`weight-${binId}`);
+  const tsEl   = $(`ts-${binId}`);
+
+  if (sensor) {
+    const p = sensor.level_pct ?? 0;
+    fill.style.width = `${p}%`;
+    fill.className   = "level-fill" +
+      (p >= CRIT_PCT ? " crit" : p >= WARN_PCT ? " warn" : "");
+    pct.textContent  = `${p}%`;
+    dist.textContent = `${sensor.distance_cm} cm dari atas`;
+    tsEl.textContent = fmtTs(sensor.timestamp);
+  }
+
+  if (weight) {
+    wEl.textContent = `${weight.weight_kg} kg`;
+    // timestamp dari weight jika sensor tidak ada
+    if (!sensor) tsEl.textContent = fmtTs(weight.timestamp);
+  }
+}
+
+// ── UPDATE DETECTION LOG ───────────────────────────────────────────
+function updateDetections(detections) {
+  const list = $("detect-list");
+  if (!detections || detections.length === 0) {
+    list.innerHTML = '<div class="empty-state">Belum ada data deteksi</div>';
+    return;
+  }
+  list.innerHTML = detections.map(d => `
+    <div class="detect-row">
+      <span class="detect-time">${fmtTs(d.timestamp)}</span>
+      <span class="detect-class ${d.class_name}">${d.class_name.replace("_", " ")}</span>
+      <span class="detect-conf">${(d.confidence * 100).toFixed(1)}%</span>
+      <span class="detect-route ${d.routed_to}">${d.routed_to}</span>
+    </div>
+  `).join("");
+}
+
+// ── UPDATE SUMMARY BARS ────────────────────────────────────────────
+function updateSummary(summary) {
+  const counts = {
+    organik:              summary["organik"]              ?? 0,
+    anorganik:            summary["anorganik"]            ?? 0,
+    anorganik_styrofoam:  summary["anorganik_styrofoam"]  ?? 0,
+  };
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  $("cnt-organik").textContent  = counts.organik;
+  $("cnt-anorganik").textContent = counts.anorganik;
+  $("cnt-styro").textContent    = counts.anorganik_styrofoam;
+  $("total-label").textContent  = `Total: ${total} deteksi`;
+
+  const max = Math.max(...Object.values(counts), 1);
+  $("bar-organik").style.width  = `${(counts.organik / max * 100).toFixed(1)}%`;
+  $("bar-anorganik").style.width = `${(counts.anorganik / max * 100).toFixed(1)}%`;
+  $("bar-styro").style.width    = `${(counts.anorganik_styrofoam / max * 100).toFixed(1)}%`;
+}
+
+// ── MAIN POLL LOOP ─────────────────────────────────────────────────
+async function poll() {
+  try {
+    const res  = await fetch(`${API_BASE}/api/latest`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const d    = json.data;
+
+    updateBin("organik",   d.sensor.organik,   d.weight.organik);
+    updateBin("anorganik", d.sensor.anorganik, d.weight.anorganik);
+    updateDetections(d.detections);
+    updateSummary(d.detection_summary);
+
+    setStatus(true);
+    $("last-update").textContent =
+      "diperbarui " + new Date().toLocaleTimeString("id-ID");
+
+  } catch (e) {
+    setStatus(false);
+    console.error("[SmartBin]", e);
+  }
+}
+
+poll();
+setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>

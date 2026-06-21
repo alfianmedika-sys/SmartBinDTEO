@@ -1,0 +1,46 @@
+No,Timestamp,Jarak_Kamera_cm,Objek_Uji,Kelas_Prediksi,Confidence_Score_pct,Bounding_Box_Terdeteksi,Keterangan
+1,2026-06-20 20:57:01,10,Botol plastik,R,84.9,Tidak (klasifikasi),OK
+2,2026-06-20 20:57:43,10,Botol plastik,O,66.1,Tidak (klasifikasi),OK
+1,2026-06-20 21:20:16,10,Botol plastik,tidak terdeteksi,0.0,Tidak,0,OK
+2,2026-06-20 21:22:20,10,Botol plastik,anorganik,94.9,Ya,3,J
+3,2026-06-20 21:23:02,10,Botol plastik,anorganik,100.0,Ya,2,20
+4,2026-06-20 21:24:07,10,Botol plastik,anorganik,100.0,Ya,3,j
+1,2026-06-21 02:04:24,12.4,OK,258,Botol plastik,anorganik,98.4,Ya,3,OK
+2,2026-06-21 02:05:28,25.2,OK,127,Botol plastik,organik,99.9,Ya,3,ok
+3,2026-06-21 02:06:50,7.2,OK,258,Kulit buah,organik,100.0,Ya,3,OK
+4,2026-06-21 02:07:29,6.6,OK,282,Kulit buah,anorganik,99.2,Ya,2,OK
+5,2026-06-21 02:08:18,10.4,OK,179,Kulit buah,organik,100.0,Ya,1,OK
+6,2026-06-21 02:09:04,10.8,OK,172,Kulit buah,organik,100.0,Ya,1,OK
+7,2026-06-21 02:10:22,68.9,OK,219,Kulit buah,organik,98.7,Ya,1,OK
+1,2026-06-21 02:22:24,-,Objek tidak terdeteksi,-,Botol plastik,tidak terdeteksi,0.0,Tidak,0,OK
+2,2026-06-21 02:22:59,43.8,OK,73,Botol plastik,anorganik,61.1,Ya,1,OK
+3,2026-06-21 02:23:29,-,Objek tidak terdeteksi,-,Botol plastik,tidak terdeteksi,0.0,Tidak,0,OK
+4,2026-06-21 02:24:00,29.9,OK,131,Botol plastik,anorganik,99.9,Ya,1,OK
+5,2026-06-21 02:24:33,27.0,OK,99,Botol plastik,anorganik,100.0,Ya,3,OK
+6,2026-06-21 02:25:02,37.4,OK,154,Botol plastik,anorganik,100.0,Ya,3,OK
+7,2026-06-21 02:25:38,48.5,OK,137,Botol plastik,anorganik,100.0,Ya,3,OK
+8,2026-06-21 02:26:34,24.2,OK,217,Botol plastik,anorganik,100.0,Ya,3,ok
+9,2026-06-21 02:26:46,33.2,OK,158,Botol plastik,anorganik,100.0,Ya,3,OK
+10,2026-06-21 02:26:56,31.6,OK,166,Botol plastik,anorganik,100.0,Ya,3,OK
+11,2026-06-21 02:27:09,26.2,OK,200,Botol plastik,anorganik,100.0,Ya,3,OK
+12,2026-06-21 02:27:21,19.7,OK,266,Botol plastik,anorganik,100.0,Ya,3,OK
+13,2026-06-21 02:27:49,169.4,OK,121,Botol plastik,anorganik,100.0,Ya,2,OK
+14,2026-06-21 02:28:04,154.1,OK,133,Botol plastik,anorganik,100.0,Ya,3,OK
+15,2026-06-21 02:28:19,160.2,OK,128,Botol plastik,anorganik,100.0,Ya,2,OK
+16,2026-06-21 02:28:32,170.8,OK,120,Botol plastik,anorganik,100.0,Ya,3,OK
+17,2026-06-21 02:28:46,168.0,OK,122,Botol plastik,anorganik,100.0,Ya,3,OK
+18,2026-06-21 02:29:25,-,Objek tidak terdeteksi,-,Kulit buah,tidak terdeteksi,0.0,Tidak,0,OK
+19,2026-06-21 02:29:47,19.7,OK,240,Kulit buah,organik,100.0,Ya,1,OK
+20,2026-06-21 02:30:13,29.4,OK,148,Kulit buah,organik,99.0,Ya,1,OK
+21,2026-06-21 02:30:36,40.4,OK,110,Kulit buah,organik,99.6,Ya,3,OK
+22,2026-06-21 02:31:11,58.9,OK,95,Kulit buah,organik,99.3,Ya,3,OK
+23,2026-06-21 02:31:48,31.0,OK,143,Kulit buah,organik,99.6,Ya,1,OK
+24,2026-06-21 02:31:59,31.5,OK,141,Kulit buah,organik,99.2,Ya,2,OK
+25,2026-06-21 02:32:10,30.8,OK,144,Kulit buah,organik,99.9,Ya,2,OK
+26,2026-06-21 02:32:20,31.5,OK,141,Kulit buah,organik,99.9,Ya,2,OK
+27,2026-06-21 02:32:34,31.5,OK,141,Kulit buah,organik,99.8,Ya,1,OK
+28,2026-06-21 02:33:03,67.1,OK,242,Kulit buah,anorganik,100.0,Ya,3,OK
+29,2026-06-21 02:33:14,180.6,OK,90,Kulit buah,organik,99.7,Ya,3,OK
+30,2026-06-21 02:33:26,182.6,OK,89,Kulit buah,organik,99.6,Ya,3,OK
+31,2026-06-21 02:33:36,178.6,OK,91,Kulit buah,organik,98.7,Ya,3,OK
+32,2026-06-21 02:33:48,55.5,OK,293,Kulit buah,anorganik,100.0,Ya,3,OK
