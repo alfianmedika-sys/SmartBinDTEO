@@ -1,16 +1,25 @@
 """
-app.py — Flask Backend API SmartBin
+App.py — Flask Backend API SmartBin
 Jalankan di Raspberry Pi: python3 App.py
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 import os
+import threading
 from functools import wraps
 import db_helper
 
 app = Flask(__name__)
 
 BIN_IDS = {"organik", "anorganik"}
+
+# =====================================================================
+# SHARED FRAME BUFFER — diisi oleh FixCodeForWasteDetection
+# Saat keduanya jalan dalam proses terpisah, Flask stream frame
+# yang di-POST via /api/frame dari WasteSorter
+# =====================================================================
+_mjpeg_lock  = threading.Lock()
+_mjpeg_frame = None   # bytes JPEG terbaru
 
 
 # =====================================================================
@@ -40,6 +49,50 @@ def require_json(f):
 def index():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return send_from_directory(os.path.join(base_dir, "static"), "index.html")
+
+
+# =====================================================================
+# VIDEO STREAM — MJPEG
+# =====================================================================
+
+def _buat_blank_jpeg():
+    """Buat frame hitam 640x480 sebagai placeholder saat kamera belum aktif."""
+    import cv2, numpy as np
+    blank = np.zeros((480, 640, 3), dtype=np.uint8)
+    cv2.putText(blank, "Menunggu kamera...", (160, 240),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 100, 100), 2)
+    _, buf = cv2.imencode(".jpg", blank, [cv2.IMWRITE_JPEG_QUALITY, 70])
+    return buf.tobytes()
+
+def _gen_frames():
+    import time
+    blank_jpeg = _buat_blank_jpeg()
+    while True:
+        with _mjpeg_lock:
+            frame = _mjpeg_frame
+        data = frame if frame else blank_jpeg
+        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + data + b"\r\n")
+        time.sleep(0.04)   # ~25fps max
+
+@app.route("/video_feed")
+def video_feed():
+    """Stream MJPEG kamera langsung ke browser."""
+    return Response(_gen_frames(),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+
+@app.route("/api/frame", methods=["POST"])
+def frame_post():
+    """
+    Terima frame JPEG dari FixCodeForWasteDetection.py via HTTP POST.
+    Body: raw JPEG bytes (Content-Type: image/jpeg)
+    """
+    global _mjpeg_frame
+    data = request.get_data()
+    if not data:
+        return error("Body kosong")
+    with _mjpeg_lock:
+        _mjpeg_frame = data
+    return success({"received": True})
 
 
 # =====================================================================
@@ -161,4 +214,4 @@ def detection_post():
 # =====================================================================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)

@@ -1,0 +1,31 @@
+============================================================
+ LAPORAN ENDURANCE TEST — SmartBin Raspberry Pi 4
+ 2026-07-03 09:41:33
+============================================================
+
+Durasi uji      : 420.0 menit (7.00 jam)
+Total sampel    : 869 titik data (interval 30 detik)
+
+SUHU CPU
+  Minimum       : 51.1 °C
+  Maksimum      : 56.9 °C
+  Rata-rata     : 53.0 °C
+  [OK] Suhu dalam batas aman (<80°C)
+
+PENGGUNAAN CPU
+  Maksimum      : 93.1 %
+  Rata-rata     : 39.0 %
+
+PENGGUNAAN RAM
+  Maksimum      : 83.5 %
+  Rata-rata     : 78.2 %
+
+TEGANGAN
+  Kejadian under-voltage : 0 kali
+  [OK] Tidak ada under-voltage
+
+DETEKSI YOLO
+  Total deteksi : 347 objek
+  Deteksi baru selama uji : 2 objek
+
+============================================================

@@ -1,6 +1,6 @@
 """
 ============================================================
- percobaan2_variasi_gangguan.py
+ percobaan2_variasi_gangguan.py  —  VERSI PERBAIKAN
  Percobaan 2 — Deteksi dengan Variasi Gangguan
  SmartBin — Pengolahan Citra Digital
 
@@ -10,21 +10,40 @@
    - Posisi objek (miring, terbalik, tertutup sebagian)
    - Multi-objek (2 objek berbeda kelas)
 
+ Perubahan dari versi sebelumnya:
+
+   FIX 1 — input() dihapus dari main loop.
+           input() di terminal MEMBLOKIR thread utama, sehingga
+           cv2.imshow() berhenti dipanggil ulang dan window kamera
+           tampak hitam/freeze. Sekarang keterangan diketik LANGSUNG
+           di overlay kamera (mode ketik), tanpa pernah keluar dari
+           render loop.
+
+   FIX 2 — Navigasi skenario sepenuhnya MANUAL.
+           Tombol SPASI tidak lagi otomatis maju ke skenario
+           berikutnya. Kamu bisa menekan SPASI berkali-kali untuk
+           mengambil 3-5 sampel di skenario yang sama, baru tekan
+           N untuk pindah skenario berikutnya secara sengaja.
+
  Prosedur:
-   1. Pilih skenario gangguan dengan tombol S
-   2. Atur kondisi lingkungan sesuai skenario
-   3. Tekan SPASI untuk ambil sampel
-   4. Hasil dicatat ke CSV otomatis
+   1. Atur kondisi lingkungan sesuai skenario yang tampil
+   2. Tekan SPASI untuk ambil sampel (bisa berkali-kali)
+   3. (Opsional) Tekan K untuk menambahkan keterangan pada sampel
+      yang baru diambil
+   4. Tekan N / P untuk pindah skenario berikutnya / sebelumnya
+   5. Hasil dicatat ke CSV otomatis setiap SPASI ditekan
 
  Output:
    - CSV: hasil_percobaan2.csv
    - Screenshot setiap sampel
 
  Kontrol:
-   SPASI  — ambil sampel deteksi
-   S      — ganti skenario gangguan
-   O      — ganti objek uji
-   Q/ESC  — keluar
+   SPASI    — ambil sampel deteksi (boleh berkali-kali per skenario)
+   N        — skenario BERIKUTNYA (manual)
+   P        — skenario SEBELUMNYA (manual)
+   O        — ganti objek uji (mode ketik di overlay)
+   K        — tambah keterangan utk sampel terakhir (mode ketik di overlay)
+   Q / ESC  — keluar
 ============================================================
 """
 
@@ -150,6 +169,48 @@ def deteksi_frame(model, frame, names):
     return annotated, kelas_str, conf_val
 
 
+# ============================================================
+# [FIX 1] MODE KETIK DI OVERLAY — pengganti input() terminal
+# ============================================================
+#
+# Daripada panggil input() yang membekukan jendela kamera, kita
+# simpan status "sedang mengetik apa" di variabel, lalu render
+# teksnya di atas frame kamera setiap loop tetap berjalan.
+# Tombol huruf/angka yang ditekan ditambahkan ke buffer,
+# BACKSPACE menghapus, ENTER menyelesaikan input.
+
+TYPE_MODE_NONE    = None
+TYPE_MODE_OBJEK   = "objek"
+TYPE_MODE_KET     = "keterangan"
+
+def gambar_prompt_ketik(frame, label, buffer):
+    """Gambar kotak input mengetik di tengah-bawah frame, di atas frame kamera."""
+    h, w = frame.shape[:2]
+    teks = f"{label}: {buffer}_"
+    box_h = 50
+    cv2.rectangle(frame, (0, h - box_h), (w, h), (30, 30, 30), -1)
+    cv2.putText(frame, teks, (10, h - 16),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 128), 2)
+    cv2.putText(frame, "ENTER=selesai | ESC=batal", (10, h - box_h + 18),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (180, 180, 180), 1)
+
+
+def proses_tombol_ketik(key, buffer):
+    """
+    Update buffer teks berdasar keycode.
+    Kembalikan (buffer_baru, selesai:bool, batal:bool)
+    """
+    if key == 13 or key == 10:        # ENTER
+        return buffer, True, False
+    if key == 27:                     # ESC
+        return buffer, False, True
+    if key == 8 or key == 127:        # BACKSPACE
+        return buffer[:-1], False, False
+    if 32 <= key <= 126:              # karakter cetak (ASCII)
+        return buffer + chr(key), False, False
+    return buffer, False, False
+
+
 def main():
     print("=" * 55)
     print("  PERCOBAAN 2 — Deteksi dengan Variasi Gangguan")
@@ -166,14 +227,23 @@ def main():
     time.sleep(0.5)
 
     f_csv, writer = init_csv()
-    skenario_idx  = 0
-    skenario_ini  = SKENARIO[skenario_idx]
-    objek_override = None   # None = pakai default dari skenario
+    skenario_idx    = 0
+    skenario_ini    = SKENARIO[skenario_idx]
+    objek_override  = None   # None = pakai default dari skenario
+    sampel_count    = 0      # jumlah sampel diambil di skenario AKTIF saat ini
+
+    # [FIX 1] state mode ketik
+    type_mode   = TYPE_MODE_NONE
+    type_buffer = ""
+    last_row_idx = None       # index baris CSV terakhir (untuk update keterangan via K)
+    last_csv_path = OUTPUT_CSV
 
     print("\n[INFO] Kontrol:")
-    print("  SPASI  — ambil sampel")
-    print("  S      — skenario berikutnya")
-    print("  O      — ganti objek uji manual")
+    print("  SPASI  — ambil sampel (boleh berkali-kali per skenario)")
+    print("  N      — skenario BERIKUTNYA (manual)")
+    print("  P      — skenario SEBELUMNYA (manual)")
+    print("  O      — ganti objek uji (ketik di overlay)")
+    print("  K      — tambah keterangan utk sampel terakhir (ketik di overlay)")
     print("  Q/ESC  — keluar\n")
 
     while True:
@@ -187,18 +257,18 @@ def main():
         objek_tampil = objek_override or skenario_ini["objek_default"]
         skenario_no  = skenario_ini["no"]
 
-        # Overlay
+        # Overlay info
         overlay = annotated.copy()
         info = [
-            f"Skenario #{skenario_no}/{len(SKENARIO)}",
+            f"Skenario #{skenario_no}/{len(SKENARIO)}  (sampel: {sampel_count})",
             f"Jenis : {skenario_ini['jenis']}",
             f"Kondisi: {skenario_ini['kondisi'][:35]}",
             f"Objek : {objek_tampil}",
             f"Deteksi: {kelas_str[:35]}",
             f"Conf  : {conf_val*100:.1f}%",
-            f"SPASI=catat | S=skenario | Q=keluar",
+            f"SPASI=catat | N/P=skenario | O=objek | K=ket | Q=keluar",
         ]
-        cv2.rectangle(overlay, (0,0), (400, 30 + len(info)*26), (0,0,0), -1)
+        cv2.rectangle(overlay, (0,0), (430, 30 + len(info)*26), (0,0,0), -1)
         y = 30
         for line in info:
             cv2.putText(overlay, line, (8, y),
@@ -206,28 +276,82 @@ def main():
                         (0,255,128) if "SPASI" in line else (220,220,220), 1)
             y += 26
 
+        # [FIX 1] Kalau sedang dalam mode ketik, gambar prompt di bawah
+        if type_mode == TYPE_MODE_OBJEK:
+            gambar_prompt_ketik(overlay, "Nama objek uji", type_buffer)
+        elif type_mode == TYPE_MODE_KET:
+            gambar_prompt_ketik(overlay, "Keterangan sampel terakhir", type_buffer)
+
         cv2.imshow("Percobaan 2 — Variasi Gangguan (SPASI=catat, Q=keluar)", overlay)
 
         key = cv2.waitKey(1) & 0xFF
+        if key == 255:   # tidak ada tombol ditekan
+            continue
+
+        # --- Jika sedang mode ketik, semua tombol diarahkan ke buffer ---
+        if type_mode is not None:
+            type_buffer, selesai, batal = proses_tombol_ketik(key, type_buffer)
+
+            if batal:
+                print(f"[BATAL] mode ketik dibatalkan")
+                type_mode, type_buffer = TYPE_MODE_NONE, ""
+                continue
+
+            if selesai:
+                hasil = type_buffer.strip()
+                if type_mode == TYPE_MODE_OBJEK:
+                    objek_override = hasil if hasil else None
+                    print(f"[OBJEK] diubah menjadi: {objek_override or skenario_ini['objek_default']} (default)")
+
+                elif type_mode == TYPE_MODE_KET:
+                    if last_row_idx is None:
+                        print("[KET] belum ada sampel yang dicatat di skenario ini")
+                    else:
+                        _update_keterangan_csv(last_csv_path, last_row_idx, hasil)
+                        print(f"[KET] keterangan diperbarui: '{hasil}'")
+
+                type_mode, type_buffer = TYPE_MODE_NONE, ""
+            continue   # selama mode ketik, JANGAN proses tombol lain di bawah
+
+        # --- Tombol normal (di luar mode ketik) ---
 
         if key in (ord('q'), 27):
             break
 
-        elif key == ord('s'):
-            skenario_idx = (skenario_idx + 1) % len(SKENARIO)
-            skenario_ini = SKENARIO[skenario_idx]
-            objek_override = None
-            print(f"[SKENARIO] #{skenario_ini['no']}: {skenario_ini['jenis']} — {skenario_ini['kondisi']}")
+        elif key == ord('n'):
+            if skenario_idx < len(SKENARIO) - 1:
+                skenario_idx += 1
+                skenario_ini   = SKENARIO[skenario_idx]
+                objek_override = None
+                sampel_count   = 0
+                last_row_idx   = None
+                print(f"[SKENARIO] #{skenario_ini['no']}: {skenario_ini['jenis']} — {skenario_ini['kondisi']}")
+            else:
+                print("[SKENARIO] sudah di skenario terakhir")
+
+        elif key == ord('p'):
+            if skenario_idx > 0:
+                skenario_idx -= 1
+                skenario_ini   = SKENARIO[skenario_idx]
+                objek_override = None
+                sampel_count   = 0
+                last_row_idx   = None
+                print(f"[SKENARIO] #{skenario_ini['no']}: {skenario_ini['jenis']} — {skenario_ini['kondisi']}")
+            else:
+                print("[SKENARIO] sudah di skenario pertama")
 
         elif key == ord('o'):
-            inp = input("\n[INPUT] Nama objek uji (kosong=default): ").strip()
-            objek_override = inp if inp else None
+            type_mode, type_buffer = TYPE_MODE_OBJEK, (objek_override or "")
+            print("[MODE] ketik nama objek uji di jendela kamera...")
+
+        elif key == ord('k'):
+            type_mode, type_buffer = TYPE_MODE_KET, ""
+            print("[MODE] ketik keterangan di jendela kamera...")
 
         elif key == ord(' '):
-            frame_s = cam.read()
-            ann_s, kelas_s, conf_s = deteksi_frame(model, frame_s, names)
-
-            ket = input(f"\n[INPUT] Keterangan (kosong=OK): ").strip()
+            # Pakai frame & hasil deteksi yang SUDAH ada di iterasi ini —
+            # tidak perlu re-capture / re-infer (lebih cepat & konsisten
+            # dengan apa yang kamu lihat di layar saat menekan SPASI).
             objek_final = objek_override or skenario_ini["objek_default"]
 
             writer.writerow([skenario_ini["no"],
@@ -235,31 +359,59 @@ def main():
                              skenario_ini["jenis"],
                              skenario_ini["kondisi"],
                              objek_final,
-                             kelas_s,
-                             f"{conf_s*100:.1f}",
-                             ket])
+                             kelas_str,
+                             f"{conf_val*100:.1f}",
+                             ""])   # keterangan kosong dulu, bisa diisi via 'K'
             f_csv.flush()
+            last_row_idx = _hitung_baris_terakhir(OUTPUT_CSV)
+            sampel_count += 1
 
-            print(f"[CATAT] #{skenario_ini['no']} | {skenario_ini['jenis']} | "
-                  f"{objek_final} | Pred={kelas_s} | Conf={conf_s*100:.1f}%")
+            print(f"[CATAT] #{skenario_ini['no']} sampel-{sampel_count} | "
+                  f"{skenario_ini['jenis']} | {objek_final} | "
+                  f"Pred={kelas_str} | Conf={conf_val*100:.1f}%")
 
             # Screenshot
             ss_dir = os.path.join(os.path.dirname(OUTPUT_CSV), "screenshots_p2")
             os.makedirs(ss_dir, exist_ok=True)
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             cv2.imwrite(os.path.join(ss_dir,
-                f"p2_{skenario_ini['no']}_{skenario_ini['jenis'].replace(' ','_')}_{ts}.jpg"), ann_s)
+                f"p2_{skenario_ini['no']}_{skenario_ini['jenis'].replace(' ','_')}_"
+                f"s{sampel_count}_{ts}.jpg"), annotated)
 
-            # Auto-maju ke skenario berikutnya
-            skenario_idx = min(skenario_idx + 1, len(SKENARIO) - 1)
-            skenario_ini = SKENARIO[skenario_idx]
-            objek_override = None
-            print(f"[AUTO]  Maju ke skenario #{skenario_ini['no']}: {skenario_ini['kondisi']}")
+            # [FIX 2] TIDAK ADA auto-maju skenario lagi.
+            # Kamu sekarang kontrol penuh kapan pindah via tombol N/P.
 
     f_csv.close()
     cam.release()
     cv2.destroyAllWindows()
     print(f"\n[SELESAI] Data tersimpan di: {OUTPUT_CSV}")
+
+
+# ============================================================
+# Util CSV — update kolom Keterangan pada baris tertentu
+# ============================================================
+
+def _hitung_baris_terakhir(csv_path):
+    """Hitung index baris data terakhir (tidak termasuk header)."""
+    with open(csv_path, "r", encoding="utf-8") as f:
+        return sum(1 for _ in f) - 1   # -1 untuk header
+
+
+def _update_keterangan_csv(csv_path, row_idx, keterangan_baru):
+    """
+    Update kolom Keterangan pada baris ke-row_idx (1-indexed, tidak
+    termasuk header). File CSV dibaca penuh, diubah, ditulis ulang —
+    aman untuk file kecil seperti ini (puluhan-ratusan baris).
+    """
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+
+    target = row_idx  # baris ke-0 = header, baris ke-row_idx = data terakhir
+    if 0 < target < len(rows):
+        rows[target][-1] = keterangan_baru
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        csv.writer(f).writerows(rows)
 
 
 if __name__ == "__main__":

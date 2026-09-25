@@ -1,0 +1,41 @@
+No,Timestamp,Skenario_Uji,Kondisi_Jaringan,Data_Dikirim,Latency_ms,Data_Diterima_Dashboard,HTTP_Status,Keterangan
+1,2026-06-22 15:32:54,Normal,"WiFi stabil, jarak < 5m",anorganik+berat,36.89,Ya,200,OK
+2,2026-06-22 15:33:07,Normal,"WiFi stabil, jarak < 5m",organik+berat,26.23,Ya,200,ok
+3,2026-06-22 15:33:12,Normal,"WiFi stabil, jarak < 5m",anorganik_styrofoam+berat,24.97,Ya,200,ok
+4,2026-06-22 15:33:16,Jarak jauh,"WiFi stabil, jarak 10m",anorganik+berat,43.6,Ya,200,OK
+5,2026-06-22 15:33:40,Jarak jauh,"WiFi stabil, jarak 15m",organik+berat,28.2,Ya,200,OK
+6,2026-06-22 15:33:50,Jarak jauh,"WiFi stabil, jarak 20m",anorganik_styrofoam+berat,22.12,Ya,200,OK
+7,2026-06-22 15:34:11,Sinyal lemah,WiFi sinyal rendah (1 bar),anorganik+berat,39.37,Ya,200,OK
+8,2026-06-22 15:34:15,Sinyal lemah,WiFi sinyal rendah (1 bar),organik+berat,21.3,Ya,200,OK
+9,2026-06-22 15:34:54,Koneksi putus,WiFi terputus saat kirim,anorganik_styrofoam+berat,56.23,Ya,200,
+10,2026-06-22 15:34:58,Koneksi putus,WiFi reconnect otomatis,anorganik+berat,50.78,Ya,200,OK
+11,2026-06-22 15:34:58,Beban data,10 pengiriman berturut-turut,organik+berat,59.91,Ya,200,burst 1/10
+11,2026-06-22 15:34:58,Beban data,10 pengiriman berturut-turut,organik+berat,43.1,Ya,200,burst 2/10
+11,2026-06-22 15:34:58,Beban data,10 pengiriman berturut-turut,organik+berat,51.42,Ya,200,burst 3/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,130.7,Ya,200,burst 4/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,34.92,Ya,200,burst 5/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,43.3,Ya,200,burst 6/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,44.77,Ya,200,burst 7/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,25.71,Ya,200,burst 8/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,44.47,Ya,200,burst 9/10
+11,2026-06-22 15:34:59,Beban data,10 pengiriman berturut-turut,organik+berat,35.33,Ya,200,burst 10/10
+12,2026-06-22 15:34:59,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,45.24,Ya,200,burst 1/20
+12,2026-06-22 15:34:59,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,30.36,Ya,200,burst 2/20
+12,2026-06-22 15:34:59,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,44.64,Ya,200,burst 3/20
+12,2026-06-22 15:34:59,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,33.05,Ya,200,burst 4/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,34.24,Ya,200,burst 5/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,45.16,Ya,200,burst 6/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,203.23,Ya,200,burst 7/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,42.93,Ya,200,burst 8/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,37.49,Ya,200,burst 9/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,41.21,Ya,200,burst 10/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,38.18,Ya,200,burst 11/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,37.18,Ya,200,burst 12/20
+12,2026-06-22 15:35:00,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,53.29,Ya,200,burst 13/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,61.43,Ya,200,burst 14/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,37.46,Ya,200,burst 15/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,43.15,Ya,200,burst 16/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,30.87,Ya,200,burst 17/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,36.19,Ya,200,burst 18/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,46.86,Ya,200,burst 19/20
+12,2026-06-22 15:35:01,Beban data,20 pengiriman berturut-turut,anorganik_styrofoam+berat,43.74,Ya,200,burst 20/20
